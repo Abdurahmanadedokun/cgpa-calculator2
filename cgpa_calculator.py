@@ -1,126 +1,107 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[3]:
-
+# 🎓 CGPA Calculator (5-Point Scale) with Score-to-Grade Conversion
+# Author: Abdurahman Adedokun
+# Built with Streamlit
 
 import streamlit as st
 import pandas as pd
 
+# ---------------------------
+# GRADE CALCULATION FUNCTION
+# ---------------------------
+def get_grade_point(score):
+    if score >= 75:
+        return "A", 5
+    elif 60 <= score <= 69:
+        return "B", 4
+    elif 50 <= score <= 59:
+        return "C", 3
+    elif 45 <= score <= 49:
+        return "D", 2
+    elif 40 <= score <= 44:
+        return "E", 1
+    else:
+        return "F", 0
 
-# In[4]:
-
-
-# Streamlit Page Config
+# ---------------------------
+# STREAMLIT APP START
+# ---------------------------
 st.set_page_config(page_title="CGPA Calculator", page_icon="🎓", layout="centered")
 
-st.title("🎓 CGPA Calculator (5-Point Scale)")
-st.write("Easily calculate your GPA and CGPA across semesters.")
+st.title("🎓 Student CGPA Calculator (5-Point Scale)")
+st.markdown("Enter your details and course information below 👇")
 
+# ---------------------------
+# STUDENT DETAILS
+# ---------------------------
+col1, col2 = st.columns(2)
+with col1:
+    name = st.text_input("Student Name:")
+    matric = st.text_input("Matric Number:")
+with col2:
+    dept = st.text_input("Department:")
+    num_courses = st.number_input("Number of Courses", min_value=1, step=1)
 
-# In[5]:
+st.divider()
 
+# ---------------------------
+# COURSE ENTRY SECTION
+# ---------------------------
+courses = []
+for i in range(int(num_courses)):
+    st.subheader(f"📘 Course {i + 1}")
+    course_code = st.text_input(f"Course Code {i + 1}", key=f"code_{i}")
+    score = st.number_input(f"Score for {course_code or f'Course {i+1}'}", 
+                            min_value=0, max_value=100, step=1, key=f"score_{i}")
+    unit = st.number_input(f"Course Unit for {course_code or f'Course {i+1}'}", 
+                           min_value=1, step=1, key=f"unit_{i}")
+    
+    # Determine grade and grade point
+    grade, gp = get_grade_point(score)
+    st.write(f"**Grade:** {grade} ({gp} points)")
+    
+    # Store data
+    courses.append({
+        "Course Code": course_code,
+        "Score": score,
+        "Grade": grade,
+        "Grade Point": gp,
+        "Unit": unit,
+        "Weighted Point": gp * unit
+    })
 
-# ============ STUDENT INFO ============
-st.subheader("👨‍🎓 Student Information")
+st.divider()
 
-name = st.text_input("Full Name")
-dept = st.text_input("Department")
-matric = st.text_input("Matric Number")
-num_semesters = st.number_input("Number of Semesters", min_value=1, max_value=10, step=1)
-
-
-# In[6]:
-
-
-# ------------- GRADING SCALE ------------
-grade_scale = {'A':5, 'B':4, 'C':3, 'D':2, 'E':1, 'F':0}
-
-def grade_to_point(grade):
-    """Convert letter grade to numeric point."""
-    return grade_scale.get(grade.upper(), 0)
-
-
-# In[7]:
-
-
-# Store semester data
-semester_gpas = []
-semester_data = []
-
-st.markdown("---")
-
-for sem in range(1, num_semesters + 1):
-    st.subheader(f"📘 Semester {sem}")
-    num_courses = st.number_input(f"Number of courses in Semester {sem}", 
-                                  min_value=1, max_value=15, step=1, key=f"num_courses_{sem}")
-
-    course_data = []
-    for i in range(int(num_courses)):
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            code = st.text_input(f"Course {i+1} Code", key=f"code_{sem}_{i}").upper()
-        with col2:
-            unit = st.number_input(f"Credit Units", min_value=1, max_value=10, step=1, key=f"unit_{sem}_{i}")
-        with col3:
-            grade = st.selectbox(f"Grade", ['A', 'B', 'C', 'D', 'E', 'F'], key=f"grade_{sem}_{i}")
-
-        course_data.append({'Course Code': code, 'Credit Units': unit, 'Grade': grade})
-
-    # GPA Calculation
-    total_units = sum(c['Credit Units'] for c in course_data)
-    total_points = sum(grade_to_point(c['Grade']) * c['Credit Units'] for c in course_data)
-    gpa = total_points / total_units if total_units else 0
-    gpa = round(gpa, 2)
-
-    semester_gpas.append(gpa)
-    semester_data.append(pd.DataFrame(course_data))
-    st.success(f"✅ GPA for Semester {sem}: **{gpa:.2f}**")
-
-
-# In[8]:
-
-
-# ------------- FINAL CGPA --------------
-if st.button("Calculate Final CGPA"):
-    total_units_all = 0
-    total_points_all = 0
-    for df in semester_data:
-        total_units_all += df["Credit Units"].sum()
-        total_points_all += sum(grade_to_point(g) * u for g, u in zip(df["Grade"], df["Credit Units"]))
-
-    cgpa = total_points_all / total_units_all if total_units_all else 0
-    cgpa = round(cgpa, 2)
-
-    st.markdown("---")
-    st.subheader("🎯 Final Result")
-    st.write(f"**Name:** {name}")
-    st.write(f"**Department:** {dept}")
-    st.write(f"**Matric Number:** {matric}")
-    st.write(f"**Number of Semesters:** {num_semesters}")
-    st.write(f"**CGPA:** 🏅 **{cgpa:.2f}**")
-
-    if cgpa >= 4.5:
-        remark = "First Class Honours 🎓"
-    elif cgpa >= 3.5:
-        remark = "Second Class Upper 👍"
-    elif cgpa >= 2.5:
-        remark = "Second Class Lower"
-    elif cgpa >= 1.5:
-        remark = "Third Class"
+# ---------------------------
+# CGPA CALCULATION SECTION
+# ---------------------------
+if st.button("📊 Calculate CGPA"):
+    if len(courses) == 0:
+        st.warning("Please enter at least one course.")
     else:
-        remark = "Pass / Probation ⚠️"
+        df = pd.DataFrame(courses)
+        total_units = df["Unit"].sum()
+        total_weighted_points = df["Weighted Point"].sum()
+        cgpa = round(total_weighted_points / total_units, 2)
 
-    st.info(f"**Classification:** {remark}")
+        st.success(f"**{name} ({matric}) — Department of {dept}**")
+        st.table(df)
 
-# Footer
-st.markdown("---")
-st.caption("Developed with ❤️ by Adedokun Abdurahman | 5-point CGPA scale")
+        st.subheader(f"🎯 Your CGPA: **{cgpa} / 5.00**")
 
+        # Degree classification
+        if cgpa >= 4.5:
+            st.info("🏅 First Class")
+        elif cgpa >= 3.5:
+            st.info("🎓 Second Class Upper")
+        elif cgpa >= 2.5:
+            st.info("📘 Second Class Lower")
+        elif cgpa >= 1.5:
+            st.info("📗 Third Class")
+        else:
+            st.warning("⚠️ Pass / Probation")
 
-# In[ ]:
-
-
-
-
-
+# ---------------------------
+# FOOTER
+# ---------------------------
+st.divider()
+st.caption("Developed by Abdurahman Adedokun | Powered by Streamlit 💻")
