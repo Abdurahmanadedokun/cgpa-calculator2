@@ -115,10 +115,11 @@ if st.button("Calculate Final CGPA"):
 
 # Footer
 st.markdown("---")
-st.caption("Developed with ❤️ using Streamlit | 5-point CGPA scale")
+st.caption("Developed with ❤️ by Adedokun Abdurahman | 5-point CGPA scale")
 
 
 # In[ ]:
+
 
 
 
